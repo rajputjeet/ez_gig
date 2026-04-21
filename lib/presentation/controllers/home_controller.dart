@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import '../../core/utils/view_state.dart';
 import '../../domain/entities/gig_entity.dart';
 import '../../domain/entities/talent_entity.dart';
 import '../../domain/usecases/get_talent_usecase.dart';
@@ -21,6 +22,9 @@ class HomeController extends GetxController {
 
   final pastGigCount = 52.obs;
 
+  final gigsState   = Rx<ViewState<List<GigEntity>>>(ViewState.initial());
+  final talentState   = Rx<ViewState<List<TalentEntity>>>(ViewState.initial());
+
   String get greeting {
     final h = DateTime.now().hour;
     if (h < 12) return 'Good Morning';
@@ -39,11 +43,13 @@ class HomeController extends GetxController {
   Future<void> fetchGigs() async {
     gigsLoading.value = true;
     gigsError.value = null;
+    gigsState.value = ViewState.loading();
     try {
       final result = await _getGigsUseCase(limit: 5);
       result.fold(
-        onSuccess: (data) => gigs.assignAll(data),
-        onFailure: (msg) => gigsError.value = msg,
+        onSuccess: (data) => gigsState.value = ViewState.success(data),
+            // gigs.assignAll(data),
+        onFailure: (msg) => gigsState.value = ViewState.error(msg),
       );
     } finally {
       gigsLoading.value = false;
@@ -56,8 +62,8 @@ class HomeController extends GetxController {
     try {
       final result = await _getTalentUseCase(limit: 6);
       result.fold(
-        onSuccess: (data) => talent.assignAll(data),
-        onFailure: (msg) => talentError.value = msg,
+        onSuccess: (data) => talentState.value = ViewState.success(data),
+        onFailure: (msg) => talentState.value = ViewState.error(msg),
       );
     } finally {
       talentLoading.value = false;

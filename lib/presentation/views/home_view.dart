@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/view_state.dart';
 import '../../domain/entities/gig_entity.dart';
 import '../../domain/entities/talent_entity.dart';
 import '../controllers/home_controller.dart';
@@ -130,32 +131,42 @@ class HomeView extends GetView<HomeController> {
 
   Widget _buildGigsSection() {
     return Obx(() {
-      if (controller.gigsLoading.value) {
+      final state = controller.gigsState.value;
+
+      if (state.isLoading) {
         return Column(
           children: List.generate(
             2,
-            (_) => const Padding(
+                (_) => const Padding(
               padding: EdgeInsets.only(bottom: 12),
               child: ShimmerGigCard(),
             ),
           ),
         );
       }
-      if (controller.gigsError.value != null) {
+
+      if (state.isError) {
         return ErrorRetryWidget(
-          message: controller.gigsError.value!,
+          message: state.message!,
           onRetry: controller.fetchGigs,
         );
       }
-      if (controller.gigs.isEmpty) return const SizedBox.shrink();
 
-      return _CurrentGigCard(gig: controller.gigs.first);
+      if (state.isSuccess) {
+        final gigs = state.data!;
+        if (gigs.isEmpty) return const SizedBox.shrink();
+        return _CurrentGigCard(gig: gigs.first);
+      }
+
+      return const SizedBox.shrink();
     });
   }
 
   Widget _buildTalentSection() {
     return Obx(() {
-      if (controller.talentLoading.value) {
+      final state = controller.talentState.value;
+
+      if (state.isLoading) {
         return GridView.count(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -166,22 +177,26 @@ class HomeView extends GetView<HomeController> {
           children: List.generate(4, (_) => const ShimmerTalentCard()),
         );
       }
-      if (controller.talentError.value != null) {
+      if (state.isError) {
         return ErrorRetryWidget(
-          message: controller.talentError.value!,
+          message: state.message!,
           onRetry: controller.fetchTalent,
         );
       }
-      final items = controller.talent.take(6).toList();
-      return GridView.count(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        crossAxisCount: 2,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        childAspectRatio: 1.19,
-        children: items.map((t) => _TalentCard(talent: t)).toList(),
-      );
+      if(state.isSuccess) {
+        final items = state.data?.take(6).toList();
+        return GridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: 2,
+          mainAxisSpacing: 12,
+          crossAxisSpacing: 12,
+          childAspectRatio: 1.19,
+          children: items!.map((t) => _TalentCard(talent: t)).toList(),
+        );
+      }
+      return const SizedBox.shrink();
+
     });
   }
 }

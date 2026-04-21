@@ -161,7 +161,7 @@ class GigCardClipper extends CustomClipper<Path> {
   Path getClip(Size size) {
     const cutX = 260.0;
     const cutY = 70.0;
-    const r = 20.0; // 👈 slightly bigger for visible rounding
+    const r = 20.0;
 
     final path = Path();
 
